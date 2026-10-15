@@ -57,7 +57,7 @@ md2pdf notes.md                      # writes notes.pdf next to notes.md
 md2pdf -o out.pdf notes.md           # writes out.pdf
 md2pdf -page a4 *.md                 # a PDF for each file, on A4 pages
 md2pdf -size 10 -lang fr-CA notes.md # smaller text, in French
-md2pdf --version                     # md2pdf v1.0.5, built on PDFjet ...
+md2pdf --version                     # md2pdf v1.0.7, built on PDFjet ...
 ```
 
 | Option | Default | |

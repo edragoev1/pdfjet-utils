@@ -1,4 +1,4 @@
-md2pdf converts Markdown files to accessible PDFs (PDF/UA) with [PDFjet](https://github.com/edragoev1/pdfjet): headings, bold, italic, code, links, nested lists, task lists, quotes, code blocks, tables and images, in IBM Plex Sans and Mono, built in. One file per computer, nothing to install.
+md2pdf converts Markdown files to accessible PDFs (PDF/UA) with [PDFjet](https://github.com/edragoev1/pdfjet): headings, bold, italic, strikethrough, code, links, nested lists, task lists, quotes, code blocks, tables and images, in IBM Plex Sans and Mono, built in. One file per computer, nothing to install.
 
 | Computer | File |
 |---|---|
