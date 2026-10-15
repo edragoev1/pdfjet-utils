@@ -27,3 +27,14 @@ and a line break inside a paragraph is a space. A failed conversion writes no
 file.
 
 The fonts are under the SIL Open Font License 1.1: `md2pdf/fonts/OFL.txt`.
+
+## Executables for other computers
+
+`./build.sh` builds md2pdf for Linux, Windows and macOS, Intel and ARM, into
+`dist/`: one file of about 4.5 MB each, with the fonts inside, which needs
+nothing installed. Copy the one for the computer and run it from a terminal
+(`md2pdf-windows-amd64.exe notes.md` in Windows' terminal).
+
+The files are not signed: Windows' SmartScreen asks before the first run
+("More info", then "Run anyway"), and macOS refuses it until its quarantine
+is removed, once: `xattr -d com.apple.quarantine md2pdf-darwin-arm64`.
