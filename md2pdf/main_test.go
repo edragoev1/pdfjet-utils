@@ -9,6 +9,7 @@ import (
 	"bytes"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/edragoev1/pdfjet/v9/src/letter"
@@ -47,5 +48,12 @@ func TestTitleOf(t *testing.T) {
 		if got := titleOf(c.text, "dir/file.md"); got != c.want {
 			t.Errorf("%q: %q, want %q", c.text, got, c.want)
 		}
+	}
+}
+
+func TestVersionNamesMd2pdfAndGo(t *testing.T) {
+	text := versionText()
+	if !strings.HasPrefix(text, "md2pdf ") || !strings.Contains(text, "go1.") {
+		t.Errorf("%q", text)
 	}
 }
