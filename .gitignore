@@ -2,3 +2,6 @@
 /md2pdf/md2pdf
 /bin/
 /dist/
+# The local library, while md2pdf uses what is not released yet
+go.work
+go.work.sum

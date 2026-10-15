@@ -35,6 +35,14 @@ import (
 	"github.com/edragoev1/pdfjet/v9/src/pagesize"
 )
 
+// The colors, as GitHub shows Markdown: dark blue headings, blue links, and
+// green boxes of the tasks that are done.
+const (
+	headingColor = 0x1F3A5F
+	linkColor    = 0x0969DA
+	checkColor   = 0x1A7F37
+)
+
 //go:embed fonts/*.ttf
 var fonts embed.FS
 
@@ -136,7 +144,10 @@ func convert(input, pdfPath string, opts options) error {
 		return err
 	}
 
-	markdown := pdfjet.NewMarkdown(regular, bold, italic, boldItalic, code)
+	markdown := pdfjet.NewMarkdown(regular, bold, italic, boldItalic, code).
+		SetHeadingColor(headingColor).
+		SetLinkColor(linkColor).
+		SetCheckColor(checkColor)
 	markdown.SetImageDirectory(filepath.Dir(input))
 	pages := make([]*pdfjet.Page, 0)
 	markdown.DrawOnPages(pdf, string(text), &pages, opts.pageSize)
