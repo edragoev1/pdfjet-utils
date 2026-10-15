@@ -9,8 +9,9 @@ md2pdf turns this file into an **accessible PDF** in milliseconds, with
 - [x] Run the tests
   - [x] Linux and macOS
   - [x] Windows
+- [x] ~~Ship on Friday~~ Ship _today_
 - [ ] Tag the version
-- [ ] Tell the [users](https://github.com/edragoev1/pdfjet-utils).
+- [ ] Tell the users: https://github.com/edragoev1/pdfjet-utils
 
 ## How it works
 

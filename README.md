@@ -72,7 +72,8 @@ md2pdf --version                     # md2pdf v1.0.5, built on PDFjet ...
 
 - Headings, of `#` and of underlines, with the first `#` heading as the
   PDF's title
-- **Bold**, *italic*, `code` and [links](https://github.com/edragoev1/pdfjet)
+- **Bold**, *italic*, ~~strikethrough~~, `code` and [links](https://github.com/edragoev1/pdfjet),
+  with `_` and `__` too, and addresses written out, such as https://pdfjet.com
 - Bullet and numbered lists that nest, and task lists: `- [x]` and `- [ ]`
 - Quotes, code blocks and thematic breaks
 - Tables, with their columns aligned left, center or right
