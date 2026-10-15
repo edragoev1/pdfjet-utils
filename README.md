@@ -1,7 +1,6 @@
 # pdfjet-utils
 
 Small command-line tools built on [PDFjet](https://github.com/edragoev1/pdfjet).
-Private.
 
 ## md2pdf
 
@@ -26,7 +25,6 @@ It is PDFjet's Markdown, not all of Markdown: HTML is drawn as the text it is,
 and a line break inside a paragraph is a space. A failed conversion writes no
 file.
 
-The fonts are under the SIL Open Font License 1.1: `md2pdf/fonts/OFL.txt`.
 
 ## Executables for other computers
 
@@ -38,3 +36,8 @@ nothing installed. Copy the one for the computer and run it from a terminal
 The files are not signed: Windows' SmartScreen asks before the first run
 ("More info", then "Run anyway"), and macOS refuses it until its quarantine
 is removed, once: `xattr -d com.apple.quarantine md2pdf-darwin-arm64`.
+
+## License
+
+MIT: see `LICENSE`. The IBM Plex fonts built into md2pdf keep their own
+license, the SIL Open Font License 1.1: see `md2pdf/fonts/OFL.txt`.

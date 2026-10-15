@@ -1,6 +1,7 @@
 // main.go
 //
 // Copyright (c) 2026 PDFjet Software
+// Licensed under the MIT License. See LICENSE file in the project root.
 
 // md2pdf converts Markdown files to PDF with PDFjet's Markdown: headings,
 // paragraphs with bold, italic and code, lists, quotes, code blocks, tables

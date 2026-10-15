@@ -1,4 +1,7 @@
 #!/bin/bash
+# Copyright (c) 2026 PDFjet Software
+# Licensed under the MIT License. See LICENSE file in the project root.
+#
 # Builds md2pdf for Linux, Windows and macOS into dist/: one file each, with
 # the fonts inside, which needs nothing else installed. Go cross-compiles, so
 # all of them build here.
