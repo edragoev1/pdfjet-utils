@@ -1,0 +1,97 @@
+# Makes the release of a tag v1.2.3, when the tag is pushed: tests md2pdf,
+# builds it for every computer with build.sh, checks that each program says
+# the tag's version, and that the PDF of the README's sample is a PDF/UA that
+# veraPDF passes, then publishes the release with the six programs and their
+# checksums. Its notes are the tag's message, as "What's new", and
+# .github/release-notes.md.
+#
+#   git tag -a v1.0.5 -m "What is new, in a line or two"
+#   git push origin v1.0.5
+
+name: Release
+
+on:
+    push:
+        tags: [ 'v*' ]
+
+permissions:
+    contents: write
+
+jobs:
+    release:
+        runs-on: ubuntu-latest
+        timeout-minutes: 15
+        steps:
+            # The whole history and the tags, so that Go stamps the tag's
+            # version into the programs
+            - uses: actions/checkout@v7
+              with:
+                  fetch-depth: 0
+                  fetch-tags: true
+            - uses: actions/setup-go@v7
+              with:
+                  go-version-file: go.mod
+            - name: Vet and test
+              run: |
+                  go vet ./...
+                  go test ./...
+            - name: Build for Linux, Windows and macOS
+              run: ./build.sh
+            - name: Each program says the tag's version
+              run: |
+                  ./dist/md2pdf-linux-amd64 --version | tee version.txt
+                  grep -q "^md2pdf $GITHUB_REF_NAME, " version.txt
+                  for f in dist/md2pdf-*; do
+                      go version -m "$f" | grep -qE "^\s+mod\s+github.com/edragoev1/pdfjet-utils\s+$GITHUB_REF_NAME(\s|$)" ||
+                          { echo "$f is not $GITHUB_REF_NAME"; exit 1; }
+                  done
+            - name: Install veraPDF
+              env:
+                  VERAPDF_URL: https://software.verapdf.org/releases/1.30/verapdf-greenfield-1.30.2-installer.zip
+                  VERAPDF_SHA256: 6cc6341cb1af644044054b81f00a6590a7918abb18f762243de115258bcad838
+              run: |
+                  cd "$RUNNER_TEMP"
+                  curl -fsSL --retry 3 --retry-all-errors -o verapdf.zip "$VERAPDF_URL"
+                  echo "$VERAPDF_SHA256  verapdf.zip" | sha256sum -c -
+                  unzip -q verapdf.zip
+                  cat > auto-install.xml <<EOF
+                  <?xml version="1.0" encoding="UTF-8" standalone="no"?>
+                  <AutomatedInstallation langpack="eng">
+                      <com.izforge.izpack.panels.htmlhello.HTMLHelloPanel id="welcome"/>
+                      <com.izforge.izpack.panels.target.TargetPanel id="install_dir">
+                          <installpath>$RUNNER_TEMP/verapdf</installpath>
+                      </com.izforge.izpack.panels.target.TargetPanel>
+                      <com.izforge.izpack.panels.packs.PacksPanel id="sdk_pack_select">
+                          <pack index="0" name="veraPDF GUI" selected="false"/>
+                          <pack index="1" name="veraPDF Mac and *nix Scripts" selected="true"/>
+                          <pack index="2" name="veraPDF Validation model" selected="false"/>
+                          <pack index="3" name="veraPDF Documentation" selected="false"/>
+                          <pack index="4" name="veraPDF Sample Plugins" selected="false"/>
+                      </com.izforge.izpack.panels.packs.PacksPanel>
+                      <com.izforge.izpack.panels.install.InstallPanel id="install"/>
+                      <com.izforge.izpack.panels.finish.FinishPanel id="finish"/>
+                  </AutomatedInstallation>
+                  EOF
+                  java -jar verapdf-greenfield-1.30.2/verapdf-izpack-installer-1.30.2.jar auto-install.xml
+                  "$RUNNER_TEMP/verapdf/verapdf" --version
+                  echo "$RUNNER_TEMP/verapdf" >> "$GITHUB_PATH"
+            - name: The sample of the README, checked as PDF/UA by veraPDF
+              run: |
+                  ./dist/md2pdf-linux-amd64 -o "$RUNNER_TEMP/sample.pdf" docs/sample.md
+                  verapdf --flavour ua1 --format text "$RUNNER_TEMP/sample.pdf" | tee "$RUNNER_TEMP/result.txt"
+                  grep -q '^PASS' "$RUNNER_TEMP/result.txt"
+            - name: Publish the release
+              env:
+                  GH_TOKEN: ${{ github.token }}
+              run: |
+                  cd dist
+                  sha256sum md2pdf-* > SHA256SUMS
+                  {
+                      echo "## What's new"
+                      echo
+                      git tag -l --format='%(contents)' "$GITHUB_REF_NAME"
+                      echo
+                      cat ../.github/release-notes.md
+                  } > notes.md
+                  gh release create "$GITHUB_REF_NAME" --title "md2pdf ${GITHUB_REF_NAME#v}" \
+                      --notes-file notes.md md2pdf-* SHA256SUMS
