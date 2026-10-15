@@ -73,9 +73,8 @@ jobs:
                   java -jar verapdf-greenfield-1.30.2/verapdf-izpack-installer-1.30.2.jar auto-install.xml
                   "$RUNNER_TEMP/verapdf/verapdf" --version
                   echo "$RUNNER_TEMP/verapdf" >> "$GITHUB_PATH"
-            - name: A sample, checked as PDF/UA by veraPDF
+            - name: The sample of the README, checked as PDF/UA by veraPDF
               run: |
-                  printf '# Sample\n\nSome **bold**, *italic* and `code`, and [a link](https://pdfjet.com).\n\n- one\n  - nested\n\n> A quote\n\n| A | B |\n|---|---|\n| 1 | 2 |\n\n```\ncode block\n```\n' > sample.md
-                  ./dist/md2pdf-linux-amd64 sample.md
-                  verapdf --flavour ua1 --format text sample.pdf | tee result.txt
-                  grep -q '^PASS' result.txt
+                  ./dist/md2pdf-linux-amd64 -o "$RUNNER_TEMP/sample.pdf" docs/sample.md
+                  verapdf --flavour ua1 --format text "$RUNNER_TEMP/sample.pdf" | tee "$RUNNER_TEMP/result.txt"
+                  grep -q '^PASS' "$RUNNER_TEMP/result.txt"
