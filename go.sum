@@ -1,2 +1,4 @@
 github.com/edragoev1/pdfjet/v9 v9.0.7 h1:WMPTu5+b9/JngWMifuHHeZ++egfAzx3a1YXb/bnd2Ug=
 github.com/edragoev1/pdfjet/v9 v9.0.7/go.mod h1:YFtbW6TrrxLu4+seSLmlv6KT4nL54eTYTqn1rxnkFaM=
+github.com/edragoev1/pdfjet/v9 v9.0.8-0.20261015025226-97bbe50a02c3 h1:4K8E0frHYUu1sOj6b+PZlkYxzgwfN//Cqgj53nHb2UA=
+github.com/edragoev1/pdfjet/v9 v9.0.8-0.20261015025226-97bbe50a02c3/go.mod h1:YFtbW6TrrxLu4+seSLmlv6KT4nL54eTYTqn1rxnkFaM=
