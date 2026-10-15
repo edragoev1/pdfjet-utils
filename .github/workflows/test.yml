@@ -1,0 +1,81 @@
+# Tests md2pdf and builds it for every computer build.sh builds it for, on
+# Linux alone, as Go cross-compiles and Linux minutes count once against the
+# private repositories' allowance. The job fails if go vet warns, a test
+# fails, a build fails, or the PDF of a sample is not a PDF/UA that veraPDF
+# passes.
+
+name: Test
+
+on:
+    # Not for a push that changes only documents, which no check reads:
+    # the minutes of the private repositories are counted
+    push:
+        branches: [ main ]
+        paths-ignore:
+            - '*.md'
+    pull_request:
+        paths-ignore:
+            - '*.md'
+    workflow_dispatch:
+
+permissions:
+    contents: read
+
+# A newer push to the same branch cancels a run that is still going.
+concurrency:
+    group: test-${{ github.ref }}
+    cancel-in-progress: true
+
+jobs:
+    test:
+        runs-on: ubuntu-latest
+        timeout-minutes: 15
+        steps:
+            - uses: actions/checkout@v7
+            - uses: actions/setup-go@v7
+              with:
+                  go-version-file: go.mod
+            - name: Vet and test
+              run: |
+                  go vet ./...
+                  go test ./...
+            - name: Build for Linux, Windows and macOS
+              run: ./build.sh
+            # As in pdfjet-pro's workflow: the installer's SHA-256 is pinned,
+            # and only the command line application is installed.
+            - name: Install veraPDF
+              env:
+                  VERAPDF_URL: https://software.verapdf.org/releases/1.30/verapdf-greenfield-1.30.2-installer.zip
+                  VERAPDF_SHA256: 6cc6341cb1af644044054b81f00a6590a7918abb18f762243de115258bcad838
+              run: |
+                  cd "$RUNNER_TEMP"
+                  curl -fsSL --retry 3 --retry-all-errors -o verapdf.zip "$VERAPDF_URL"
+                  echo "$VERAPDF_SHA256  verapdf.zip" | sha256sum -c -
+                  unzip -q verapdf.zip
+                  cat > auto-install.xml <<EOF
+                  <?xml version="1.0" encoding="UTF-8" standalone="no"?>
+                  <AutomatedInstallation langpack="eng">
+                      <com.izforge.izpack.panels.htmlhello.HTMLHelloPanel id="welcome"/>
+                      <com.izforge.izpack.panels.target.TargetPanel id="install_dir">
+                          <installpath>$RUNNER_TEMP/verapdf</installpath>
+                      </com.izforge.izpack.panels.target.TargetPanel>
+                      <com.izforge.izpack.panels.packs.PacksPanel id="sdk_pack_select">
+                          <pack index="0" name="veraPDF GUI" selected="false"/>
+                          <pack index="1" name="veraPDF Mac and *nix Scripts" selected="true"/>
+                          <pack index="2" name="veraPDF Validation model" selected="false"/>
+                          <pack index="3" name="veraPDF Documentation" selected="false"/>
+                          <pack index="4" name="veraPDF Sample Plugins" selected="false"/>
+                      </com.izforge.izpack.panels.packs.PacksPanel>
+                      <com.izforge.izpack.panels.install.InstallPanel id="install"/>
+                      <com.izforge.izpack.panels.finish.FinishPanel id="finish"/>
+                  </AutomatedInstallation>
+                  EOF
+                  java -jar verapdf-greenfield-1.30.2/verapdf-izpack-installer-1.30.2.jar auto-install.xml
+                  "$RUNNER_TEMP/verapdf/verapdf" --version
+                  echo "$RUNNER_TEMP/verapdf" >> "$GITHUB_PATH"
+            - name: A sample, checked as PDF/UA by veraPDF
+              run: |
+                  printf '# Sample\n\nSome **bold**, *italic* and `code`, and [a link](https://pdfjet.com).\n\n- one\n  - nested\n\n> A quote\n\n| A | B |\n|---|---|\n| 1 | 2 |\n\n```\ncode block\n```\n' > sample.md
+                  ./dist/md2pdf-linux-amd64 sample.md
+                  verapdf --flavour ua1 --format text sample.pdf | tee result.txt
+                  grep -q '^PASS' result.txt
