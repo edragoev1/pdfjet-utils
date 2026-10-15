@@ -35,7 +35,7 @@ installed.
 | Mac, Intel | `md2pdf-darwin-amd64` |
 | Linux | `md2pdf-linux-amd64`, or `-arm64` on ARM |
 
-Or, with Go 1.27 or later:
+Or, with Go 1.26 or later:
 
 ```
 go install github.com/edragoev1/pdfjet-utils/md2pdf@latest
