@@ -56,6 +56,7 @@ xattr -d com.apple.quarantine md2pdf-darwin-arm64
 md2pdf notes.md                      # writes notes.pdf next to notes.md
 md2pdf -o out.pdf notes.md           # writes out.pdf
 md2pdf -page a4 *.md                 # a PDF for each file, on A4 pages
+md2pdf -landscape wide.md            # letter pages turned sideways, for wide tables
 md2pdf -size 10 -lang fr-CA notes.md # smaller text, in French
 md2pdf --version                     # md2pdf v1.0.7, built on PDFjet ...
 ```
@@ -63,7 +64,8 @@ md2pdf --version                     # md2pdf v1.0.7, built on PDFjet ...
 | Option | Default | |
 |---|---|---|
 | `-o` | the `.md` file's name, with `.pdf` | The PDF to write, for one Markdown file |
-| `-page` | `letter` | The page size: `letter` or `a4` |
+| `-page` | `letter` | The page size: `letter`, `legal`, `tabloid`, `a3`, `a4` or `a5` |
+| `-landscape` | off | The pages turned sideways, wider than they are tall |
 | `-size` | `11` | The size of the text, in points, from 6 to 24 |
 | `-lang` | `en-US` | The language of the text, for screen readers |
 | `--version` | | Prints the version of md2pdf and of PDFjet |

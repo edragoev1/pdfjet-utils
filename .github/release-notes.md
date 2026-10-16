@@ -13,6 +13,7 @@ md2pdf converts Markdown files to accessible PDFs (PDF/UA) with [PDFjet](https:/
 md2pdf notes.md                  # writes notes.pdf next to notes.md
 md2pdf -o out.pdf notes.md
 md2pdf -page a4 *.md
+md2pdf -landscape wide.md        # also -page legal, tabloid, a3 or a5
 md2pdf -size 10 -lang fr-CA notes.md
 md2pdf --version
 ```

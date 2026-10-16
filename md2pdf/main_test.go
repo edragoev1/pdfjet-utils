@@ -57,3 +57,28 @@ func TestVersionNamesMd2pdfAndGo(t *testing.T) {
 		t.Errorf("%q", text)
 	}
 }
+
+func TestPageSizeOf(t *testing.T) {
+	for _, c := range []struct {
+		name          string
+		landscape     bool
+		width, height float32
+	}{
+		{"letter", false, 612, 792},
+		{"Letter", true, 792, 612},
+		{"legal", false, 612, 1008},
+		{"tabloid", true, 1224, 792},
+		{"a4", false, 595, 842},
+		{"A4", true, 842, 595},
+		{"a3", false, 842, 1191},
+		{"a5", true, 595, 420},
+	} {
+		size, ok := pageSizeOf(c.name, c.landscape)
+		if !ok || int(size.GetWidth()) != int(c.width) || int(size.GetHeight()) != int(c.height) {
+			t.Errorf("%s, landscape %v: %v x %v, %v", c.name, c.landscape, size.GetWidth(), size.GetHeight(), ok)
+		}
+	}
+	if _, ok := pageSizeOf("b4", false); ok {
+		t.Error("b4 is a page size")
+	}
+}

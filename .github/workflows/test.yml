@@ -78,3 +78,8 @@ jobs:
                   ./dist/md2pdf-linux-amd64 -o "$RUNNER_TEMP/sample.pdf" docs/sample.md
                   verapdf --flavour ua1 --format text "$RUNNER_TEMP/sample.pdf" | tee "$RUNNER_TEMP/result.txt"
                   grep -q '^PASS' "$RUNNER_TEMP/result.txt"
+            - name: The sample on A4 turned sideways, checked as PDF/UA too
+              run: |
+                  ./dist/md2pdf-linux-amd64 -page a4 -landscape -o "$RUNNER_TEMP/landscape.pdf" docs/sample.md
+                  verapdf --flavour ua1 --format text "$RUNNER_TEMP/landscape.pdf" | tee "$RUNNER_TEMP/landscape.txt"
+                  grep -q '^PASS' "$RUNNER_TEMP/landscape.txt"

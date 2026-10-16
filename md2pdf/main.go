@@ -12,6 +12,7 @@
 //	md2pdf notes.md                  writes notes.pdf, next to notes.md
 //	md2pdf -o out.pdf notes.md       writes out.pdf
 //	md2pdf -page a4 *.md             writes a PDF for each, on A4 pages
+//	md2pdf -landscape wide.md        writes wide.pdf, on letter pages turned sideways
 //
 // Images are read from the directory of the Markdown file, and from nowhere
 // else.
@@ -31,10 +32,14 @@ import (
 	"strings"
 
 	pdfjet "github.com/edragoev1/pdfjet/v9/src"
+	"github.com/edragoev1/pdfjet/v9/src/a3"
 	"github.com/edragoev1/pdfjet/v9/src/a4"
+	"github.com/edragoev1/pdfjet/v9/src/a5"
 	"github.com/edragoev1/pdfjet/v9/src/compliance"
+	"github.com/edragoev1/pdfjet/v9/src/legal"
 	"github.com/edragoev1/pdfjet/v9/src/letter"
 	"github.com/edragoev1/pdfjet/v9/src/pagesize"
+	"github.com/edragoev1/pdfjet/v9/src/tabloid"
 )
 
 // The colors, as GitHub shows Markdown: dark blue headings, blue links, and
@@ -56,14 +61,40 @@ type options struct {
 	language string
 }
 
+// The page sizes, by name: PDFjet's, upright and turned sideways.
+var pageSizes = map[string][2]func() pagesize.PageSize{
+	"letter":  {letter.Portrait, letter.Landscape},
+	"legal":   {legal.Portrait, legal.Landscape},
+	"tabloid": {tabloid.Portrait, tabloid.Landscape},
+	"a3":      {a3.Portrait, a3.Landscape},
+	"a4":      {a4.Portrait, a4.Landscape},
+	"a5":      {a5.Portrait, a5.Landscape},
+}
+
+const pageNames = "letter, legal, tabloid, a3, a4 or a5"
+
+// pageSizeOf returns the page size of a name, in any case, upright or
+// turned sideways, and whether there is one of that name.
+func pageSizeOf(name string, landscape bool) (pagesize.PageSize, bool) {
+	sizes, ok := pageSizes[strings.ToLower(name)]
+	if !ok {
+		return pagesize.PageSize{}, false
+	}
+	if landscape {
+		return sizes[1](), true
+	}
+	return sizes[0](), true
+}
+
 func main() {
 	output := flag.String("o", "", "the PDF to write, for a single Markdown file (default: the .md file's name with .pdf)")
-	page := flag.String("page", "letter", "the page size: letter or a4")
+	page := flag.String("page", "letter", "the page size: "+pageNames)
+	landscape := flag.Bool("landscape", false, "the pages turned sideways, wider than they are tall")
 	size := flag.Float64("size", 11, "the size of the text, in points")
 	language := flag.String("lang", "en-US", "the language of the text, such as en-US, fr-CA or de-DE")
 	showVersion := flag.Bool("version", false, "print the version of md2pdf and of PDFjet, and exit")
 	flag.Usage = func() {
-		fmt.Fprintln(os.Stderr, "Usage: md2pdf [-o file.pdf] [-page letter|a4] [-size 11] [-lang en-US] file.md ...\n       md2pdf --version")
+		fmt.Fprintln(os.Stderr, "Usage: md2pdf [-o file.pdf] [-page letter|legal|tabloid|a3|a4|a5] [-landscape] [-size 11] [-lang en-US] file.md ...\n       md2pdf --version")
 		flag.PrintDefaults()
 	}
 	flag.Parse()
@@ -80,15 +111,12 @@ func main() {
 		os.Exit(2)
 	}
 	opts := options{output: *output, size: float32(*size), language: *language}
-	switch strings.ToLower(*page) {
-	case "letter":
-		opts.pageSize = letter.Portrait()
-	case "a4":
-		opts.pageSize = a4.Portrait()
-	default:
-		fmt.Fprintln(os.Stderr, "md2pdf: the page is letter or a4, not "+*page)
+	pageSize, ok := pageSizeOf(*page, *landscape)
+	if !ok {
+		fmt.Fprintln(os.Stderr, "md2pdf: the page is "+pageNames+", not "+*page)
 		os.Exit(2)
 	}
+	opts.pageSize = pageSize
 	if opts.size < 6 || opts.size > 24 {
 		fmt.Fprintln(os.Stderr, "md2pdf: the size is from 6 to 24 points")
 		os.Exit(2)
