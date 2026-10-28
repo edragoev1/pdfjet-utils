@@ -6,12 +6,15 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 
+	"github.com/edragoev1/pdfjet/v9/src"
 	"github.com/edragoev1/pdfjet/v9/src/letter"
 )
 
@@ -35,6 +38,31 @@ func TestConvertWritesAPDF(t *testing.T) {
 	}
 	if err := convert(input, input, options{pageSize: letter.Portrait(), size: 11}); err == nil {
 		t.Errorf("the Markdown file was replaced")
+	}
+}
+
+// The text fonts kern, "AV" closer than A and V apart; the code font does
+// not, its letters one width each.
+func TestTheTextIsKernedAndTheCodeIsNot(t *testing.T) {
+	pdf := pdfjet.NewPDF(bufio.NewWriter(io.Discard))
+	for _, c := range []struct {
+		name   string
+		kerned bool
+	}{
+		{"IBMPlexSans-Regular.ttf", true},
+		{"IBMPlexSans-Bold.ttf", true},
+		{"IBMPlexSans-Italic.ttf", true},
+		{"IBMPlexSans-BoldItalic.ttf", true},
+		{"IBMPlexMono-Regular.ttf", false},
+	} {
+		f, err := font(pdf, c.name, 11)
+		if err != nil {
+			t.Fatal(err)
+		}
+		apart := f.StringWidth(f.GetSize(), "A") + f.StringWidth(f.GetSize(), "V")
+		if together := f.StringWidth(f.GetSize(), "AV"); (together < apart) != c.kerned {
+			t.Errorf("%s: AV %v, A and V %v", c.name, together, apart)
+		}
 	}
 }
 

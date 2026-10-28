@@ -201,13 +201,19 @@ func convert(input, pdfPath string, opts options) error {
 	return os.WriteFile(pdfPath, buffer.Bytes(), 0o644)
 }
 
-// font returns the built-in font, at the size.
+// font returns the built-in font, at the size, kerned as the font's own
+// kerning says, as PDFjet does since 9.1.5; but the code font, whose
+// letters keep one width each, so that the columns of code stay in line.
 func font(pdf *pdfjet.PDF, name string, size float32) (*pdfjet.Font, error) {
 	data, err := fonts.ReadFile("fonts/" + name)
 	if err != nil {
 		return nil, err
 	}
-	return pdfjet.NewFont(pdf, bytes.NewReader(data)).SetSize(size), nil
+	f := pdfjet.NewFont(pdf, bytes.NewReader(data)).SetSize(size)
+	if !strings.Contains(name, "Mono") {
+		f.SetKernPairs(true)
+	}
+	return f, nil
 }
 
 // titleOf returns the title of the document: its first heading of #, not in
