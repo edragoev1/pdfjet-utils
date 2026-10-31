@@ -180,7 +180,7 @@ func convert(input, pdfPath string, opts options) error {
 	if err != nil {
 		return err
 	}
-	code, err := font(pdf, "CascadiaMono-SemiLight.ttf", opts.size*0.86)
+	code, err := font(pdf, "CascadiaMono-Regular.ttf", opts.size*0.86)
 	if err != nil {
 		return err
 	}

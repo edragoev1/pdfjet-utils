@@ -53,7 +53,7 @@ func TestTheTextIsKernedAndTheCodeIsNot(t *testing.T) {
 		{"IBMPlexSans-Bold.ttf", true},
 		{"IBMPlexSans-Italic.ttf", true},
 		{"IBMPlexSans-BoldItalic.ttf", true},
-		{"CascadiaMono-SemiLight.ttf", false},
+		{"CascadiaMono-Regular.ttf", false},
 	} {
 		f, err := font(pdf, c.name, 11)
 		if err != nil {
