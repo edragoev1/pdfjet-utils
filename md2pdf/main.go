@@ -5,7 +5,7 @@
 
 // md2pdf converts Markdown files to PDF with PDFjet's Markdown: headings,
 // paragraphs with bold, italic and code, lists, quotes, code blocks, tables
-// and images, in IBM Plex Sans and IBM Plex Mono, which are built into the
+// and images, in IBM Plex Sans or Serif and Cascadia Mono, which are built into the
 // program. The PDFs are PDF/UA, tagged for screen readers, with a page number
 // at the foot of every page.
 //
@@ -58,6 +58,7 @@ type options struct {
 	output   string
 	pageSize pagesize.PageSize
 	size     float32
+	serif    bool
 	language string
 }
 
@@ -91,10 +92,11 @@ func main() {
 	page := flag.String("page", "letter", "the page size: "+pageNames)
 	landscape := flag.Bool("landscape", false, "the pages turned sideways, wider than they are tall")
 	size := flag.Float64("size", 11, "the size of the text, in points")
+	serif := flag.Bool("serif", false, "the text in IBM Plex Serif, not IBM Plex Sans")
 	language := flag.String("lang", "en-US", "the language of the text, such as en-US, fr-CA or de-DE")
 	showVersion := flag.Bool("version", false, "print the version of md2pdf and of PDFjet, and exit")
 	flag.Usage = func() {
-		fmt.Fprintln(os.Stderr, "Usage: md2pdf [-o file.pdf] [-page letter|legal|tabloid|a3|a4|a5] [-landscape] [-size 11] [-lang en-US] file.md ...\n       md2pdf --version")
+		fmt.Fprintln(os.Stderr, "Usage: md2pdf [-o file.pdf] [-page letter|legal|tabloid|a3|a4|a5] [-landscape] [-serif] [-size 11] [-lang en-US] file.md ...\n       md2pdf --version")
 		flag.PrintDefaults()
 	}
 	flag.Parse()
@@ -110,7 +112,7 @@ func main() {
 		fmt.Fprintln(os.Stderr, "md2pdf: -o names one PDF, for one Markdown file")
 		os.Exit(2)
 	}
-	opts := options{output: *output, size: float32(*size), language: *language}
+	opts := options{output: *output, size: float32(*size), serif: *serif, language: *language}
 	pageSize, ok := pageSizeOf(*page, *landscape)
 	if !ok {
 		fmt.Fprintln(os.Stderr, "md2pdf: the page is "+pageNames+", not "+*page)
@@ -158,23 +160,27 @@ func convert(input, pdfPath string, opts options) error {
 	pdf.SetTitle(titleOf(string(text), input))
 	pdf.SetLanguage(opts.language)
 
-	regular, err := font(pdf, "IBMPlexSans-Regular.ttf", opts.size)
+	family := "IBMPlexSans"
+	if opts.serif {
+		family = "IBMPlexSerif"
+	}
+	regular, err := font(pdf, family+"-Regular.ttf", opts.size)
 	if err != nil {
 		return err
 	}
-	bold, err := font(pdf, "IBMPlexSans-Bold.ttf", opts.size)
+	bold, err := font(pdf, family+"-Bold.ttf", opts.size)
 	if err != nil {
 		return err
 	}
-	italic, err := font(pdf, "IBMPlexSans-Italic.ttf", opts.size)
+	italic, err := font(pdf, family+"-Italic.ttf", opts.size)
 	if err != nil {
 		return err
 	}
-	boldItalic, err := font(pdf, "IBMPlexSans-BoldItalic.ttf", opts.size)
+	boldItalic, err := font(pdf, family+"-BoldItalic.ttf", opts.size)
 	if err != nil {
 		return err
 	}
-	code, err := font(pdf, "IBMPlexMono-Regular.ttf", opts.size*0.86)
+	code, err := font(pdf, "CascadiaMono-SemiLight.ttf", opts.size*0.86)
 	if err != nil {
 		return err
 	}

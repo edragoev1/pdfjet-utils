@@ -53,7 +53,7 @@ func TestTheTextIsKernedAndTheCodeIsNot(t *testing.T) {
 		{"IBMPlexSans-Bold.ttf", true},
 		{"IBMPlexSans-Italic.ttf", true},
 		{"IBMPlexSans-BoldItalic.ttf", true},
-		{"IBMPlexMono-Regular.ttf", false},
+		{"CascadiaMono-SemiLight.ttf", false},
 	} {
 		f, err := font(pdf, c.name, 11)
 		if err != nil {
@@ -108,5 +108,34 @@ func TestPageSizeOf(t *testing.T) {
 	}
 	if _, ok := pageSizeOf("b4", false); ok {
 		t.Error("b4 is a page size")
+	}
+}
+
+// -serif sets the text in IBM Plex Serif; by default it is IBM Plex Sans, and
+// the code is Cascadia Mono either way.
+func TestSerifSetsTheTextInIBMPlexSerif(t *testing.T) {
+	dir := t.TempDir()
+	input := filepath.Join(dir, "notes.md")
+	if err := os.WriteFile(input, []byte("Some text and `code`.\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	for _, test := range []struct {
+		serif bool
+		font  string
+	}{{false, "IBMPlexSans"}, {true, "IBMPlexSerif"}} {
+		output := filepath.Join(dir, "notes.pdf")
+		opts := options{pageSize: letter.Portrait(), size: 11, serif: test.serif, language: "en-US"}
+		if err := convert(input, output, opts); err != nil {
+			t.Fatal(err)
+		}
+		pdf, err := os.ReadFile(output)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, font := range []string{test.font, "CascadiaMono"} {
+			if !bytes.Contains(pdf, []byte(font)) {
+				t.Errorf("serif %v: no %s", test.serif, font)
+			}
+		}
 	}
 }

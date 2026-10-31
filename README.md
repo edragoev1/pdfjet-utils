@@ -58,6 +58,7 @@ md2pdf -o out.pdf notes.md           # writes out.pdf
 md2pdf -page a4 *.md                 # a PDF for each file, on A4 pages
 md2pdf -landscape wide.md            # letter pages turned sideways, for wide tables
 md2pdf -size 10 -lang fr-CA notes.md # smaller text, in French
+md2pdf -serif notes.md               # the text in IBM Plex Serif
 md2pdf --version                     # md2pdf v1.0.8, built on PDFjet ...
 ```
 
@@ -83,7 +84,8 @@ md2pdf --version                     # md2pdf v1.0.8, built on PDFjet ...
   folder of the Markdown file and from nowhere else
 - A page number at the foot of every page
 
-The text is IBM Plex Sans and the code IBM Plex Mono, embedded as subsets
+The text is IBM Plex Sans, or IBM Plex Serif with `-serif`, and the code
+Cascadia Mono, embedded as subsets
 of the characters used, so a one-page PDF is about 70 KB. A page takes a few
 milliseconds.
 
@@ -125,6 +127,6 @@ go test ./...
 
 ## License
 
-MIT: see [LICENSE](LICENSE). The IBM Plex fonts built into md2pdf keep their
+MIT: see [LICENSE](LICENSE). The IBM Plex and Cascadia Mono fonts built into md2pdf keep their
 own license, the SIL Open Font License 1.1: see
 [md2pdf/fonts/OFL.txt](md2pdf/fonts/OFL.txt).
