@@ -59,7 +59,7 @@ md2pdf -page a4 *.md                 # a PDF for each file, on A4 pages
 md2pdf -landscape wide.md            # letter pages turned sideways, for wide tables
 md2pdf -size 10 -lang fr-CA notes.md # smaller text, in French
 md2pdf -serif notes.md               # the text in IBM Plex Serif
-md2pdf --version                     # md2pdf v1.0.8, built on PDFjet ...
+md2pdf --version                     # md2pdf v1.0.9, built on PDFjet ...
 ```
 
 | Option | Default | |
