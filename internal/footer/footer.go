@@ -20,9 +20,11 @@ const (
 	// height above the bottom of the page, in points
 	Margin = 36
 	Height = 18
-	// The size of its text, and its color, a quiet gray
-	size  = 8
-	color = 0x6B7280
+	// The size of the link and of the page's number, the link a point
+	// larger (the owner, 10 November 2026), and their color, a quiet gray
+	linkSize = 9
+	size     = 8
+	color    = 0x6B7280
 )
 
 // Draw draws the foot of the page: the link to the tool's page,
@@ -30,7 +32,7 @@ const (
 func Draw(page *pdfjet.Page, font *pdfjet.Font, tool string, number, pages int) {
 	y := page.GetHeight() - Height
 	link := pdfjet.NewTextLine(font, "Made with pdfjet.com/"+tool)
-	link.SetFontSize(size)
+	link.SetFontSize(linkSize)
 	link.SetTextColor(color)
 	link.SetURIAction("https://pdfjet.com/" + tool)
 	link.SetLocation(Margin, y)
