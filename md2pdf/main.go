@@ -206,11 +206,18 @@ func render(text []byte, title, imageDirectory string, opts options) ([]byte, er
 		SetHeadingColor(headingColor).
 		SetLinkColor(linkColor).
 		SetCheckColor(checkColor)
-	if imageDirectory != "" {
-		markdown.SetImageDirectory(imageDirectory)
-	}
 	pages := make([]*pdfjet.Page, 0)
-	markdown.DrawOnPages(pdf, string(text), &pages, opts.pageSize)
+	// An SVG pasted in the text is drawn as an image (svgpaste.go)
+	err = withPastedSVGs(string(text), imageDirectory, func(text, imageDirectory string) error {
+		if imageDirectory != "" {
+			markdown.SetImageDirectory(imageDirectory)
+		}
+		markdown.DrawOnPages(pdf, text, &pages, opts.pageSize)
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
 	for i, page := range pages {
 		number := pdfjet.NewTextLine(regular, strconv.Itoa(i+1))
 		number.SetFontSize(9)

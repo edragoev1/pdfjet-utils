@@ -24,7 +24,10 @@ push.
 **Or on the web, nothing to install:**
 [pdfjet.com/markdown-to-pdf](https://pdfjet.com/markdown-to-pdf), the same
 program run by the web server: paste your Markdown or choose a `.md` file,
-and get the same PDF (images are left out on the web).
+and get the same PDF. Images are left out on the web, but an SVG pasted
+into the Markdown is drawn, there and on the command line: its code on
+lines of its own, from `<svg` to `</svg>`, becomes an image, read out by its
+`<title>`.
 
 ### Install
 
