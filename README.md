@@ -21,11 +21,16 @@ push.
 <sub>[docs/sample.md](docs/sample.md), and the PDF md2pdf made of it,
 [docs/sample.pdf](docs/sample.pdf).</sub>
 
+**Or on the web, nothing to install:**
+[pdfjet.com/markdown-to-pdf](https://pdfjet.com/markdown-to-pdf), the same
+program run by the web server: paste your Markdown or choose a `.md` file,
+and get the same PDF (images are left out on the web).
+
 ### Install
 
 Download the file for your computer from the
 [latest release](https://github.com/edragoev1/pdfjet-utils/releases/latest):
-one file of about 4.5 MB, with the fonts inside, that needs nothing else
+one file of about 6 MB, with the fonts inside, that needs nothing else
 installed.
 
 | Computer | File |

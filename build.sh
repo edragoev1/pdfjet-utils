@@ -15,6 +15,9 @@ for target in linux/amd64 linux/arm64 windows/amd64 windows/arm64 darwin/arm64 d
     os=${target%/*} arch=${target#*/}
     name=md2pdf-$os-$arch
     [ "$os" = windows ] && name=$name.exe
-    GOWORK=off CGO_ENABLED=0 GOOS=$os GOARCH=$arch go build -trimpath -ldflags="-s -w" -o "dist/$name" ./md2pdf
+    # pdfjet_nofonts: without the fonts PDFjet carries, which md2pdf never
+    # uses, as it carries its own (md2pdf/fonts); with them, each file was
+    # about 15 MB, without them about 6
+    GOWORK=off CGO_ENABLED=0 GOOS=$os GOARCH=$arch go build -tags pdfjet_nofonts -trimpath -ldflags="-s -w" -o "dist/$name" ./md2pdf
 done
 ls -lh dist | awk 'NR>1 {print $5, $9}'

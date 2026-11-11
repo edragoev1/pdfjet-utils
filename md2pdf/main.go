@@ -88,6 +88,12 @@ func pageSizeOf(name string, landscape bool) (pagesize.PageSize, bool) {
 }
 
 func main() {
+	// Run by a web server, as md2pdf.cgi on pdfjet.com: the page's text in,
+	// its PDF out (cgi.go)
+	if os.Getenv("GATEWAY_INTERFACE") != "" {
+		serveCGI()
+		return
+	}
 	output := flag.String("o", "", "the PDF to write, for a single Markdown file (default: the .md file's name with .pdf)")
 	page := flag.String("page", "letter", "the page size: "+pageNames)
 	landscape := flag.Bool("landscape", false, "the pages turned sideways, wider than they are tall")
@@ -142,7 +148,7 @@ func main() {
 	}
 }
 
-// convert writes the PDF of the Markdown file. The PDF is written in memory
+// convert writes the PDF of the Markdown file. The PDF is made in memory
 // first, so that a failed conversion leaves no half-written file.
 func convert(input, pdfPath string, opts options) error {
 	text, err := os.ReadFile(input)
@@ -152,12 +158,23 @@ func convert(input, pdfPath string, opts options) error {
 	if filepath.Clean(input) == filepath.Clean(pdfPath) {
 		return errors.New("the PDF would replace the Markdown file")
 	}
+	data, err := render(text, titleOf(string(text), input), filepath.Dir(input), opts)
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(pdfPath, data, 0o644)
+}
 
+// render returns the PDF of the Markdown text, with the title. Its images
+// are read from the directory, or none when it is "", as on the web
+// (cgi.go), where a text sent has no directory of its own: PDFjet then reads
+// no image and draws its text in its place.
+func render(text []byte, title, imageDirectory string, opts options) ([]byte, error) {
 	var buffer bytes.Buffer
 	writer := bufio.NewWriter(&buffer)
 	pdf := pdfjet.NewPDF(writer)
 	pdf.SetCompliance(compliance.PDF_UA_1)
-	pdf.SetTitle(titleOf(string(text), input))
+	pdf.SetTitle(title)
 	pdf.SetLanguage(opts.language)
 
 	family := "IBMPlexSans"
@@ -166,30 +183,32 @@ func convert(input, pdfPath string, opts options) error {
 	}
 	regular, err := font(pdf, family+"-Regular.ttf", opts.size)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	bold, err := font(pdf, family+"-Bold.ttf", opts.size)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	italic, err := font(pdf, family+"-Italic.ttf", opts.size)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	boldItalic, err := font(pdf, family+"-BoldItalic.ttf", opts.size)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	code, err := font(pdf, "CascadiaMono-Regular.ttf", opts.size*0.9)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	markdown := pdfjet.NewMarkdown(regular, bold, italic, boldItalic, code).
 		SetHeadingColor(headingColor).
 		SetLinkColor(linkColor).
 		SetCheckColor(checkColor)
-	markdown.SetImageDirectory(filepath.Dir(input))
+	if imageDirectory != "" {
+		markdown.SetImageDirectory(imageDirectory)
+	}
 	pages := make([]*pdfjet.Page, 0)
 	markdown.DrawOnPages(pdf, string(text), &pages, opts.pageSize)
 	for i, page := range pages {
@@ -199,12 +218,12 @@ func convert(input, pdfPath string, opts options) error {
 	}
 	pdf.AddPages(pages)
 	if err := pdf.Complete(); err != nil {
-		return err
+		return nil, err
 	}
 	if err := writer.Flush(); err != nil {
-		return err
+		return nil, err
 	}
-	return os.WriteFile(pdfPath, buffer.Bytes(), 0o644)
+	return buffer.Bytes(), nil
 }
 
 // font returns the built-in font, at the size, kerned as the font's own
