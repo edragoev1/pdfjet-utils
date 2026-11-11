@@ -27,10 +27,10 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"runtime/debug"
 	"strconv"
 	"strings"
 
+	"github.com/edragoev1/pdfjet-utils/internal/version"
 	pdfjet "github.com/edragoev1/pdfjet/v9/src"
 	"github.com/edragoev1/pdfjet/v9/src/a3"
 	"github.com/edragoev1/pdfjet/v9/src/a4"
@@ -267,30 +267,7 @@ func titleOf(text, input string) string {
 }
 
 // versionText returns the version of md2pdf and of the PDFjet it is built
-// on, as Go records them in the program: the tag of a release, such as
-// v1.0.5, for go install and for build.sh at a tag, and a pseudo-version
-// of the commit otherwise.
+// on (internal/version).
 func versionText() string {
-	info, ok := debug.ReadBuildInfo()
-	if !ok {
-		return "md2pdf (version unknown)"
-	}
-	version := info.Main.Version
-	if version == "" {
-		version = "(devel)"
-	}
-	text := "md2pdf " + version
-	for _, module := range info.Deps {
-		if module.Path == "github.com/edragoev1/pdfjet/v9" {
-			pdfjetVersion := module.Version
-			if module.Replace != nil {
-				pdfjetVersion = module.Replace.Version
-				if pdfjetVersion == "" {
-					pdfjetVersion = "(local)"
-				}
-			}
-			text += ", built on PDFjet " + pdfjetVersion
-		}
-	}
-	return text + ", " + info.GoVersion
+	return version.Text("md2pdf")
 }

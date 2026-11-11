@@ -1,4 +1,4 @@
-# Tests md2pdf and builds it for every computer build.sh builds it for, on
+# Tests md2pdf and csv2pdf and builds them for every computer build.sh builds it for, on
 # Linux alone, as Go cross-compiles and Linux minutes count once against the
 # private repositories' allowance. The job fails if go vet warns, a test
 # fails, a build fails, or the PDF of a sample is not a PDF/UA that veraPDF
@@ -83,3 +83,8 @@ jobs:
                   ./dist/md2pdf-linux-amd64 -page a4 -landscape -o "$RUNNER_TEMP/landscape.pdf" docs/sample.md
                   verapdf --flavour ua1 --format text "$RUNNER_TEMP/landscape.pdf" | tee "$RUNNER_TEMP/landscape.txt"
                   grep -q '^PASS' "$RUNNER_TEMP/landscape.txt"
+            - name: The table of the sample CSV, checked as PDF/UA too
+              run: |
+                  ./dist/csv2pdf-linux-amd64 -o "$RUNNER_TEMP/table.pdf" docs/sample.csv
+                  verapdf --flavour ua1 --format text "$RUNNER_TEMP/table.pdf" | tee "$RUNNER_TEMP/table.txt"
+                  grep -q '^PASS' "$RUNNER_TEMP/table.txt"

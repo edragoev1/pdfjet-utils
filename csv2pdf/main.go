@@ -36,6 +36,7 @@ import (
 	"strings"
 
 	"github.com/edragoev1/pdfjet-utils/internal/cgiform"
+	"github.com/edragoev1/pdfjet-utils/internal/version"
 	pdfjet "github.com/edragoev1/pdfjet/v9/src"
 	"github.com/edragoev1/pdfjet/v9/src/a3"
 	"github.com/edragoev1/pdfjet/v9/src/a4"
@@ -100,12 +101,17 @@ func main() {
 	noHeader := flag.Bool("no-header", false, "the first row is data, not the header: the columns are named Column 1, 2...")
 	size := flag.Float64("size", 9, "the size of the text, in points")
 	columnList := flag.String("columns", "", "the columns drawn, counted from 1, such as 1,3,5 (default: all)")
+	showVersion := flag.Bool("version", false, "print the version of csv2pdf and of PDFjet, and exit")
 	language := flag.String("lang", "en-US", "the language of the text, such as en-US, fr-CA or de-DE")
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "Usage: csv2pdf [options] file.csv...\n\nOptions:\n")
 		flag.PrintDefaults()
 	}
 	flag.Parse()
+	if *showVersion {
+		fmt.Println(version.Text("csv2pdf"))
+		return
+	}
 	if flag.NArg() == 0 {
 		flag.Usage()
 		os.Exit(2)

@@ -124,7 +124,10 @@ csv2pdf data.csv
 csv2pdf -page a4 -columns 1,2,5 wide.csv
 ```
 
-Not in the releases yet: build it with `go build ./csv2pdf`.
+In the same [releases](https://github.com/edragoev1/pdfjet-utils/releases/latest)
+as md2pdf: `csv2pdf-windows-amd64.exe`, `csv2pdf-darwin-arm64`,
+`csv2pdf-linux-amd64` and so on, about 4 MB each, installed as md2pdf is.
+Or `go install github.com/edragoev1/pdfjet-utils/csv2pdf@latest`.
 
 ## Built on PDFjet
 

@@ -1,8 +1,8 @@
-# Makes the release of a tag v1.2.3, when the tag is pushed: tests md2pdf,
-# builds it for every computer with build.sh, checks that each program says
-# the tag's version, and that the PDF of the README's sample is a PDF/UA that
-# veraPDF passes, then publishes the release with the six programs and their
-# checksums. Its notes are the tag's message, as "What's new", and
+# Makes the release of a tag v1.2.3, when the tag is pushed: tests md2pdf and
+# csv2pdf, builds them for every computer with build.sh, checks that each
+# program says the tag's version, and that the PDFs of the samples are PDF/UA
+# that veraPDF passes, then publishes the release with the twelve programs and
+# their checksums. Its notes are the tag's message, as "What's new", and
 # .github/release-notes.md.
 #
 #   git tag -a v1.0.5 -m "What is new, in a line or two"
@@ -39,9 +39,11 @@ jobs:
               run: ./build.sh
             - name: Each program says the tag's version
               run: |
-                  ./dist/md2pdf-linux-amd64 --version | tee version.txt
-                  grep -q "^md2pdf $GITHUB_REF_NAME, " version.txt
-                  for f in dist/md2pdf-*; do
+                  for program in md2pdf csv2pdf; do
+                      ./dist/$program-linux-amd64 --version | tee version.txt
+                      grep -q "^$program $GITHUB_REF_NAME, " version.txt
+                  done
+                  for f in dist/md2pdf-* dist/csv2pdf-*; do
                       go version -m "$f" | grep -qE "^\s+mod\s+github.com/edragoev1/pdfjet-utils\s+$GITHUB_REF_NAME(\s|$)" ||
                           { echo "$f is not $GITHUB_REF_NAME"; exit 1; }
                   done
@@ -80,12 +82,17 @@ jobs:
                   ./dist/md2pdf-linux-amd64 -o "$RUNNER_TEMP/sample.pdf" docs/sample.md
                   verapdf --flavour ua1 --format text "$RUNNER_TEMP/sample.pdf" | tee "$RUNNER_TEMP/result.txt"
                   grep -q '^PASS' "$RUNNER_TEMP/result.txt"
+            - name: The table of the sample CSV, checked as PDF/UA by veraPDF
+              run: |
+                  ./dist/csv2pdf-linux-amd64 -o "$RUNNER_TEMP/table.pdf" docs/sample.csv
+                  verapdf --flavour ua1 --format text "$RUNNER_TEMP/table.pdf" | tee "$RUNNER_TEMP/table.txt"
+                  grep -q '^PASS' "$RUNNER_TEMP/table.txt"
             - name: Publish the release
               env:
                   GH_TOKEN: ${{ github.token }}
               run: |
                   cd dist
-                  sha256sum md2pdf-* > SHA256SUMS
+                  sha256sum md2pdf-* csv2pdf-* > SHA256SUMS
                   {
                       echo "## What's new"
                       echo
@@ -93,5 +100,5 @@ jobs:
                       echo
                       cat ../.github/release-notes.md
                   } > notes.md
-                  gh release create "$GITHUB_REF_NAME" --title "md2pdf ${GITHUB_REF_NAME#v}" \
-                      --notes-file notes.md md2pdf-* SHA256SUMS
+                  gh release create "$GITHUB_REF_NAME" --title "md2pdf and csv2pdf ${GITHUB_REF_NAME#v}" \
+                      --notes-file notes.md md2pdf-* csv2pdf-* SHA256SUMS

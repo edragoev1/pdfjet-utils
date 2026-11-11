@@ -1,0 +1,11 @@
+Month,Region,Product,Units,Price,Revenue
+January,North,Coffee beans,120,12.50,1500.00
+January,South,Green tea,85,8.00,680.00
+February,North,Coffee beans,132,12.50,1650.00
+February,East,Hot chocolate,64,9.75,624.00
+March,West,Espresso cups,40,22.00,880.00
+March,South,Green tea,97,8.00,776.00
+April,North,Coffee beans,141,12.50,1762.50
+April,East,"Mugs, set of 4",28,34.00,952.00
+May,West,Hot chocolate,51,9.75,497.25
+June,South,Green tea,110,8.00,880.00
