@@ -3,7 +3,7 @@
 // Copyright (c) 2026 PDFjet Software
 // Licensed under the MIT License. See LICENSE file in the project root.
 
-// csv2pdf converts a CSV file to a PDF table with PDFjet's BigTable: its
+// csv2pdf converts a CSV file to a PDF table with PDFjet's Table: its
 // first row the header, on every page, the numbers right-aligned, every other
 // row shaded, and "Page 1 of N" under it, in IBM Plex Sans, which is built
 // into the program. The PDFs are PDF/UA, the table tagged as a table for
@@ -36,6 +36,7 @@ import (
 	"strings"
 
 	"github.com/edragoev1/pdfjet-utils/internal/cgiform"
+	"github.com/edragoev1/pdfjet-utils/internal/footer"
 	"github.com/edragoev1/pdfjet-utils/internal/version"
 	pdfjet "github.com/edragoev1/pdfjet/v9/src"
 	"github.com/edragoev1/pdfjet/v9/src/a3"
@@ -290,7 +291,7 @@ func render(data []byte, title string, opts options) ([]byte, error) {
 		return nil, err
 	}
 	// A table wider than the page is set smaller to fit it, down to a size
-	// still read: BigTable cuts the last columns of one still too wide
+	// still read; one still too wide has its last columns cut
 	columns := opts.columns
 	if columns == nil {
 		for i := range header {
@@ -306,25 +307,46 @@ func render(data []byte, title string, opts options) ([]byte, error) {
 	bold.SetSize(size)
 	regular.SetSize(size)
 
-	table := pdfjet.NewBigTable(pdf, bold, regular, opts.pageSize)
-	table.SetColumns(columns...)
-	table.SetTableRows(header, func(yield func([]string) bool) {
-		for _, row := range body {
-			if !yield(row) {
-				return
-			}
-		}
-	})
-	table.SetLocation(margin, margin)
-	table.SetBottomMargin(margin)
-	table.SetPadding(padding)
-	table.SetVerticalPadding(2)
-	table.SetHeaderColor(headerColor)
-	table.SetFooterFontSize(min(8, size))
-	table.SetFooterOffset(18)
-	if err := table.Complete(); err != nil {
-		return nil, err
+	// Each column as wide as its widest field, the last cut back when the
+	// table is still wider than the page, their fields with an ellipsis
+	headers := pick(header, columns)
+	picked := pickRows(body, columns)
+	widths := columnWidths(headers, picked, bold, regular, size, opts.pageSize.GetWidth()-2*margin)
+
+	// The header on every page, the rows under it, every other one shaded
+	grid := make([][]*pdfjet.Cell, 0, len(picked)+1)
+	head := make([]*pdfjet.Cell, len(headers))
+	for i, text := range headers {
+		head[i] = newCell(bold, size, fitted(bold, size, text, widths[i]-2*padding), headerColor)
 	}
+	grid = append(grid, head)
+	for r, row := range picked {
+		shade := int32(-1)
+		if r%2 == 1 {
+			shade = shadeColor
+		}
+		cells := make([]*pdfjet.Cell, len(row))
+		for i, text := range row {
+			cells[i] = newCell(regular, size, fitted(regular, size, oneLine(text), widths[i]-2*padding), shade)
+		}
+		grid = append(grid, cells)
+	}
+	table := pdfjet.NewTable()
+	table.SetTableData(grid, 1)
+	table.RightAlignNumbers()
+	for i, w := range widths {
+		table.SetColumnWidth(i, w)
+	}
+	table.SetLocation(margin, margin)
+	// Room at the foot for the link and the page's number
+	table.SetBottomMargin(margin + 6)
+	// Pages kept aside until the last, as their foot says "1 of N"
+	var pages []*pdfjet.Page
+	table.DrawOnPages(pdf, &pages, opts.pageSize)
+	for i, page := range pages {
+		footer.Draw(page, regular, "csv-to-pdf", i+1, len(pages))
+	}
+	pdf.AddPages(pages)
 	if err := pdf.Complete(); err != nil {
 		return nil, err
 	}
@@ -371,6 +393,74 @@ func fitSize(header []string, body [][]string, bold, regular *pdfjet.Font, opts 
 		return opts.size
 	}
 	return max(minSize, opts.size*room/total)
+}
+
+// The colors of the table: its lines, and the shading of every other row
+const (
+	lineColor  = 0xB0B0B0
+	shadeColor = 0xF0F0F0
+)
+
+// newCell returns a cell of the table, its text on one line, shaded by the
+// color unless it is -1.
+func newCell(font *pdfjet.Font, size float32, text string, shade int32) *pdfjet.Cell {
+	cell := pdfjet.NewCell(font, text)
+	cell.SetFontSize(size)
+	cell.SetPadding(padding)
+	cell.SetTopPadding(2)
+	cell.SetBottomPadding(2)
+	cell.SetBorderColor(lineColor)
+	if shade >= 0 {
+		cell.SetBackgroundColor(shade)
+	}
+	return cell
+}
+
+// oneLine returns the field with its line breaks as spaces, as a row of the
+// table has one line.
+func oneLine(text string) string {
+	return strings.Join(strings.Fields(text), " ")
+}
+
+// columnWidths returns the width of each column: as wide as its widest field
+// and its padding, the last ones cut back, down to an ellipsis's width, while
+// the table is wider than the room.
+func columnWidths(headers []string, rows [][]string, bold, regular *pdfjet.Font, size, room float32) []float32 {
+	widths := make([]float32, len(headers))
+	for i, text := range headers {
+		widths[i] = bold.StringWidth(size, text) + 2*padding
+	}
+	for _, row := range rows {
+		for i, text := range row {
+			widths[i] = max(widths[i], regular.StringWidth(size, oneLine(text))+2*padding)
+		}
+	}
+	least := bold.StringWidth(size, "…") + 2*padding
+	var total float32
+	for _, w := range widths {
+		total += w
+	}
+	for i := len(widths) - 1; i >= 0 && total > room; i-- {
+		cut := min(total-room, widths[i]-least)
+		if cut > 0 {
+			widths[i] -= cut
+			total -= cut
+		}
+	}
+	return widths
+}
+
+// fitted returns the text, cut short with an ellipsis if it is wider than
+// the width.
+func fitted(font *pdfjet.Font, size float32, text string, width float32) string {
+	if font.StringWidth(size, text) <= width {
+		return text
+	}
+	runes := []rune(text)
+	for len(runes) > 0 && font.StringWidth(size, string(runes)+"…") > width {
+		runes = runes[:len(runes)-1]
+	}
+	return string(runes) + "…"
 }
 
 // pick returns the fields of the columns, in their order.

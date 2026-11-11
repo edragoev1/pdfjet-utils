@@ -30,6 +30,7 @@ import (
 	"strings"
 
 	"github.com/edragoev1/pdfjet-utils/internal/cgiform"
+	"github.com/edragoev1/pdfjet-utils/internal/footer"
 	"github.com/edragoev1/pdfjet-utils/internal/version"
 	pdfjet "github.com/edragoev1/pdfjet/v9/src"
 	"github.com/edragoev1/pdfjet/v9/src/a4"
@@ -233,6 +234,7 @@ func render(opts options) ([]byte, error) {
 			}
 		}
 	}
+	footer.Draw(page, font, "qr-code", 1, 1)
 	if err := pdf.Complete(); err != nil {
 		return nil, err
 	}

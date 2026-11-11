@@ -27,9 +27,9 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 
+	"github.com/edragoev1/pdfjet-utils/internal/footer"
 	"github.com/edragoev1/pdfjet-utils/internal/version"
 	pdfjet "github.com/edragoev1/pdfjet/v9/src"
 	"github.com/edragoev1/pdfjet/v9/src/a3"
@@ -218,10 +218,9 @@ func render(text []byte, title, imageDirectory string, opts options) ([]byte, er
 	if err != nil {
 		return nil, err
 	}
+	// The link to Markdown to PDF and the page's number at the foot of each
 	for i, page := range pages {
-		number := pdfjet.NewTextLine(regular, strconv.Itoa(i+1))
-		number.SetFontSize(9)
-		page.AddFooterOffsetBy(number, 36)
+		footer.Draw(page, regular, "markdown-to-pdf", i+1, len(pages))
 	}
 	pdf.AddPages(pages)
 	if err := pdf.Complete(); err != nil {

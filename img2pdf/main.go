@@ -31,6 +31,7 @@ import (
 	"strings"
 
 	"github.com/edragoev1/pdfjet-utils/internal/cgiform"
+	"github.com/edragoev1/pdfjet-utils/internal/footer"
 	"github.com/edragoev1/pdfjet-utils/internal/version"
 	pdfjet "github.com/edragoev1/pdfjet/v9/src"
 	"github.com/edragoev1/pdfjet/v9/src/a4"
@@ -204,6 +205,8 @@ func render(pictures []picture, title string, opts options) (pdfBytes []byte, er
 	// For the text of an SVG, if it has any
 	font := pdfjet.NewFont(pdf, bytes.NewReader(data)).SetSize(12)
 
+	// The pages kept aside until the last, as their foot says "1 of N"
+	var pages []*pdfjet.Page
 	for _, p := range pictures {
 		current = p.name
 		alt := strings.TrimSuffix(p.name, filepath.Ext(p.name))
@@ -239,15 +242,22 @@ func render(pictures []picture, title string, opts options) (pdfBytes []byte, er
 		if w > h {
 			size = sizes[1]()
 		}
-		page := pdfjet.NewPage(pdf, size)
+		page := pdfjet.NewPageDetached(pdf, size)
+		// The image above the foot, with no margins too
+		bottom := max(opts.margin, footer.Height+10)
 		roomW := page.GetWidth() - 2*opts.margin
-		roomH := page.GetHeight() - 2*opts.margin
+		roomH := page.GetHeight() - opts.margin - bottom
 		scale := min(roomW/w, roomH/h)
 		x := (page.GetWidth() - w*scale) / 2
-		y := (page.GetHeight() - h*scale) / 2
+		y := opts.margin + (roomH-h*scale)/2
 		draw(page, x, y, scale)
+		pages = append(pages, page)
 	}
 	current = ""
+	for i, page := range pages {
+		footer.Draw(page, font, "images-to-pdf", i+1, len(pages))
+	}
+	pdf.AddPages(pages)
 	if err := pdf.Complete(); err != nil {
 		return nil, err
 	}

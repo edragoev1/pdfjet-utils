@@ -31,6 +31,7 @@ import (
 	"time"
 
 	"github.com/edragoev1/pdfjet-utils/internal/cgiform"
+	"github.com/edragoev1/pdfjet-utils/internal/footer"
 	"github.com/edragoev1/pdfjet-utils/internal/version"
 	pdfjet "github.com/edragoev1/pdfjet/v9/src"
 	"github.com/edragoev1/pdfjet/v9/src/a4"
@@ -68,7 +69,6 @@ const (
 	weekendColor = 0xF3F5F8
 	lineColor    = 0xB8BFCC
 	titleColor   = 0x1F3A5F
-	footerColor  = 0x6B7280
 	margin       = 36
 )
 
@@ -236,13 +236,11 @@ type calendar struct {
 	size          pagesize.PageSize
 }
 
-// footer says where the calendar came from, small, at the foot of the page,
-// so that one printed and passed on tells where to make another
-func (c calendar) footer(page *pdfjet.Page) {
-	line := pdfjet.NewTextLine(c.regular, "Made at pdfjet.com/printable-calendar")
-	line.SetFontSize(7)
-	line.SetTextColor(footerColor)
-	page.AddFooterOffsetBy(line, 18)
+// footerOf draws the link to Printable Calendar and the page's number at the
+// foot of the page, so that a calendar printed and passed on tells where to
+// make another
+func (c calendar) footerOf(page *pdfjet.Page, number, pages int) {
+	footer.Draw(page, c.regular, "printable-calendar", number, pages)
 }
 
 // dayName returns the name of the day of the week of the column.
@@ -316,7 +314,7 @@ func (c calendar) monthPage(month time.Month) {
 	}
 	table.SetLocation(margin, top)
 	table.DrawOn(page)
-	c.footer(page)
+	c.footerOf(page, int(month), 12)
 }
 
 // yearPage draws the twelve months on one page, three across and four
@@ -388,7 +386,7 @@ func (c calendar) yearPage() {
 		table.SetLocation(x, y+20)
 		table.DrawOn(page)
 	}
-	c.footer(page)
+	c.footerOf(page, 1, 1)
 }
 
 // font returns the built-in font, kerned as its own kerning says.
