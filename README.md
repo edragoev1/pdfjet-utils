@@ -147,6 +147,21 @@ img2pdf -page a4 -margin 0 photo.png
 In the same releases, about 4 MB each, installed as md2pdf is, or
 `go install github.com/edragoev1/pdfjet-utils/img2pdf@latest`.
 
+## cal2pdf
+
+**A printable calendar of a year:** a month a page, on pages turned
+sideways, with room to write in each day, or the whole year on one page;
+Letter or A4; the weeks from Sunday or Monday. The months and the days are
+named in any of 36 languages as CLDR, the Unicode standard every browser
+uses, names them (`tools/calendar-names.mjs` writes `cal2pdf/names.go`).
+PDF/UA, each month a tagged table. On the web:
+[pdfjet.com/printable-calendar](https://pdfjet.com/printable-calendar).
+
+```
+cal2pdf 2027
+cal2pdf -year-page -lang fr-FR -page a4 2027
+```
+
 ## Built on PDFjet
 
 md2pdf is about 200 lines of Go around

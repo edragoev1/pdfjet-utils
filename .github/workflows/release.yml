@@ -1,7 +1,7 @@
 # Makes the release of a tag v1.2.3, when the tag is pushed: tests md2pdf,
-# csv2pdf and img2pdf, builds them for every computer with build.sh, checks that each
+# csv2pdf, img2pdf and cal2pdf, builds them for every computer with build.sh, checks that each
 # program says the tag's version, and that the PDFs of the samples are PDF/UA
-# that veraPDF passes, then publishes the release with the eighteen programs and
+# that veraPDF passes, then publishes the release with the twenty-four programs and
 # their checksums. Its notes are the tag's message, as "What's new", and
 # .github/release-notes.md.
 #
@@ -39,11 +39,11 @@ jobs:
               run: ./build.sh
             - name: Each program says the tag's version
               run: |
-                  for program in md2pdf csv2pdf img2pdf; do
+                  for program in md2pdf csv2pdf img2pdf cal2pdf; do
                       ./dist/$program-linux-amd64 --version | tee version.txt
                       grep -q "^$program $GITHUB_REF_NAME, " version.txt
                   done
-                  for f in dist/md2pdf-* dist/csv2pdf-* dist/img2pdf-*; do
+                  for f in dist/md2pdf-* dist/csv2pdf-* dist/img2pdf-* dist/cal2pdf-*; do
                       go version -m "$f" | grep -qE "^\s+mod\s+github.com/edragoev1/pdfjet-utils\s+$GITHUB_REF_NAME(\s|$)" ||
                           { echo "$f is not $GITHUB_REF_NAME"; exit 1; }
                   done
@@ -94,12 +94,20 @@ jobs:
                       verapdf --flavour $flavour --format text "$RUNNER_TEMP/image.pdf" | tee "$RUNNER_TEMP/image-$flavour.txt"
                       grep -q '^PASS' "$RUNNER_TEMP/image-$flavour.txt"
                   done
+            - name: A calendar, a month a page and the year on one, checked as PDF/UA by veraPDF
+              run: |
+                  ./dist/cal2pdf-linux-amd64 -o "$RUNNER_TEMP/calendar.pdf" 2027
+                  ./dist/cal2pdf-linux-amd64 -year-page -lang el-GR -o "$RUNNER_TEMP/year.pdf" 2027
+                  for f in calendar year; do
+                      verapdf --flavour ua1 --format text "$RUNNER_TEMP/$f.pdf" | tee "$RUNNER_TEMP/$f.txt"
+                      grep -q '^PASS' "$RUNNER_TEMP/$f.txt"
+                  done
             - name: Publish the release
               env:
                   GH_TOKEN: ${{ github.token }}
               run: |
                   cd dist
-                  sha256sum md2pdf-* csv2pdf-* img2pdf-* > SHA256SUMS
+                  sha256sum md2pdf-* csv2pdf-* img2pdf-* cal2pdf-* > SHA256SUMS
                   {
                       echo "## What's new"
                       echo
@@ -107,5 +115,5 @@ jobs:
                       echo
                       cat ../.github/release-notes.md
                   } > notes.md
-                  gh release create "$GITHUB_REF_NAME" --title "md2pdf, csv2pdf and img2pdf ${GITHUB_REF_NAME#v}" \
-                      --notes-file notes.md md2pdf-* csv2pdf-* img2pdf-* SHA256SUMS
+                  gh release create "$GITHUB_REF_NAME" --title "pdfjet-utils ${GITHUB_REF_NAME#v}: md2pdf, csv2pdf, img2pdf and cal2pdf" \
+                      --notes-file notes.md md2pdf-* csv2pdf-* img2pdf-* cal2pdf-* SHA256SUMS
