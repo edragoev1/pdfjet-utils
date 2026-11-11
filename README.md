@@ -109,6 +109,23 @@ tables with header cells, and the images are figures with their alternate
 text. The document has its title and its language. CI converts a sample on
 every push and fails unless veraPDF passes it.
 
+## csv2pdf
+
+**A CSV file to an accessible PDF table**, with PDFjet's BigTable: the first
+row the header, on every page, numbers right-aligned, every other row
+shaded, "Page 1 of N" at the foot, on landscape pages. Quoted fields, and a
+comma, a semicolon or a tab as the delimiter, found from the header line. A
+table too wide for the page is set smaller, down to 8 points; choose fewer
+columns for one still too wide. On the web:
+[pdfjet.com/csv-to-pdf](https://pdfjet.com/csv-to-pdf).
+
+```
+csv2pdf data.csv
+csv2pdf -page a4 -columns 1,2,5 wide.csv
+```
+
+Not in the releases yet: build it with `go build ./csv2pdf`.
+
 ## Built on PDFjet
 
 md2pdf is about 200 lines of Go around

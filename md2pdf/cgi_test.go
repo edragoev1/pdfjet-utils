@@ -18,6 +18,8 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+
+	"github.com/edragoev1/pdfjet-utils/internal/cgiform"
 )
 
 // post runs handleWeb, through writeAnswer and Go's own reading of CGI's
@@ -41,7 +43,7 @@ var direct = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		"CONTENT_LENGTH": strconv.Itoa(len(body)),
 	}
 	var out bytes.Buffer
-	writeAnswer(&out, handleWeb(func(k string) string { return env[k] }, bytes.NewReader(body)))
+	cgiform.Write(&out, handleWeb(func(k string) string { return env[k] }, bytes.NewReader(body)))
 	head, rest, _ := bytes.Cut(out.Bytes(), []byte("\r\n\r\n"))
 	status := http.StatusOK
 	for _, line := range strings.Split(string(head), "\r\n") {
@@ -128,7 +130,7 @@ func TestWebRefusals(t *testing.T) {
 	request := httptest.NewRequest(http.MethodGet, "/md2pdf.cgi", nil)
 	recorder := httptest.NewRecorder()
 	direct(recorder, request)
-	if recorder.Code != http.StatusSeeOther || recorder.Header().Get("Location") != formPage {
+	if recorder.Code != http.StatusSeeOther || recorder.Header().Get("Location") != formPage.Path {
 		t.Errorf("GET: %d %q", recorder.Code, recorder.Header().Get("Location"))
 	}
 }
@@ -141,7 +143,7 @@ func TestFileName(t *testing.T) {
 		"../..":                 "Document",
 		"":                      "Document",
 	} {
-		if got := fileName(title); got != want {
+		if got := cgiform.FileName(title); got != want {
 			t.Errorf("fileName(%q) = %q, want %q", title, got, want)
 		}
 	}
