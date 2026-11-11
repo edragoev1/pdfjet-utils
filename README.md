@@ -162,6 +162,21 @@ cal2pdf 2027
 cal2pdf -year-page -lang fr-FR -page a4 2027
 ```
 
+## qr2pdf
+
+**QR codes ready to print:** one on a page, or a sheet of the same code
+for stickers and table tents, drawn as shapes, sharp at any size, with
+their words under them if asked; error correction L, M, Q or H. The codes
+are plain: what they hold is in them, and they work as long as that does,
+with no server between to stop them or count their scans. On the web, with
+the codes of Wi-Fi networks and contact cards:
+[pdfjet.com/qr-code](https://pdfjet.com/qr-code).
+
+```
+qr2pdf -caption "Scan for the menu" https://example.com/menu
+qr2pdf -sheet -size 1.5 -level H https://pdfjet.com
+```
+
 ## Built on PDFjet
 
 md2pdf is about 200 lines of Go around

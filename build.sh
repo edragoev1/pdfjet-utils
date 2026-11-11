@@ -2,7 +2,7 @@
 # Copyright (c) 2026 PDFjet Software
 # Licensed under the MIT License. See LICENSE file in the project root.
 #
-# Builds md2pdf, csv2pdf, img2pdf and cal2pdf for Linux, Windows and macOS into dist/: one file
+# Builds md2pdf, csv2pdf, img2pdf, cal2pdf and qr2pdf for Linux, Windows and macOS into dist/: one file
 # each, with the fonts inside, which needs nothing else installed. Go cross-compiles, so
 # all of them build here, from the PDFjet that go.mod requires, not a local
 # go.work, and with the version of the git tag, which each program prints with --version.
@@ -11,7 +11,7 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 rm -rf dist && mkdir dist
-for program in md2pdf csv2pdf img2pdf cal2pdf; do
+for program in md2pdf csv2pdf img2pdf cal2pdf qr2pdf; do
     for target in linux/amd64 linux/arm64 windows/amd64 windows/arm64 darwin/arm64 darwin/amd64; do
         os=${target%/*} arch=${target#*/}
         name=$program-$os-$arch
