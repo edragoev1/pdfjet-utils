@@ -129,6 +129,24 @@ as md2pdf: `csv2pdf-windows-amd64.exe`, `csv2pdf-darwin-arm64`,
 `csv2pdf-linux-amd64` and so on, about 4 MB each, installed as md2pdf is.
 Or `go install github.com/edragoev1/pdfjet-utils/csv2pdf@latest`.
 
+## img2pdf
+
+**Images to one PDF**, a page each: JPEG, PNG, BMP and SVG, each fitted and
+centred, on a page turned sideways when it is wide, phone photos the right
+way up (their Exif orientation), SVG as shapes. The PDF is PDF/A-3a and
+PDF/UA-1 in one, made to be kept and tagged for screen readers; a CMYK
+photo, which PDF/A does not take, makes it PDF/UA alone. HEIC, WebP and GIF
+are not supported, said plainly. On the web:
+[pdfjet.com/images-to-pdf](https://pdfjet.com/images-to-pdf).
+
+```
+img2pdf -o receipts.pdf *.jpg
+img2pdf -page a4 -margin 0 photo.png
+```
+
+In the same releases, about 4 MB each, installed as md2pdf is, or
+`go install github.com/edragoev1/pdfjet-utils/img2pdf@latest`.
+
 ## Built on PDFjet
 
 md2pdf is about 200 lines of Go around

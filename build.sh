@@ -2,22 +2,22 @@
 # Copyright (c) 2026 PDFjet Software
 # Licensed under the MIT License. See LICENSE file in the project root.
 #
-# Builds md2pdf and csv2pdf for Linux, Windows and macOS into dist/: one file
+# Builds md2pdf, csv2pdf and img2pdf for Linux, Windows and macOS into dist/: one file
 # each, with the fonts inside, which needs nothing else installed. Go cross-compiles, so
 # all of them build here, from the PDFjet that go.mod requires, not a local
-# go.work, and with the version of the git tag, which md2pdf --version and csv2pdf --version print.
+# go.work, and with the version of the git tag, which each program prints with --version.
 #
 #   ./build.sh
 set -euo pipefail
 cd "$(dirname "$0")"
 rm -rf dist && mkdir dist
-for program in md2pdf csv2pdf; do
+for program in md2pdf csv2pdf img2pdf; do
     for target in linux/amd64 linux/arm64 windows/amd64 windows/arm64 darwin/arm64 darwin/amd64; do
         os=${target%/*} arch=${target#*/}
         name=$program-$os-$arch
         [ "$os" = windows ] && name=$name.exe
         # pdfjet_nofonts: without the fonts PDFjet carries, which the programs
-        # never use, as they carry their own (md2pdf/fonts, csv2pdf/fonts);
+        # never use, as they carry their own (md2pdf/fonts, csv2pdf/fonts, img2pdf/fonts);
         # with them, each md2pdf was about 15 MB, without them about 6
         GOWORK=off CGO_ENABLED=0 GOOS=$os GOARCH=$arch go build -tags pdfjet_nofonts -trimpath -ldflags="-s -w" -o "dist/$name" "./$program"
     done

@@ -17,6 +17,7 @@ import (
 	"html"
 	"io"
 	"mime"
+	"mime/multipart"
 	"net/url"
 	"os"
 	"strconv"
@@ -155,3 +156,60 @@ func FileName(title string) string {
 	}
 	return "Document"
 }
+
+// File is a file a form sends: its name, as the browser gives it, and its
+// bytes.
+type File struct {
+	Name string
+	Data []byte
+}
+
+// ReadFiles reads the form a page posts with its files,
+// multipart/form-data, of no more than max bytes: its fields, and the files
+// of the field, in the order they were sent, at most maxFiles. It gives
+// ErrTooLarge for a request larger than max, ErrTooMany for more files, and
+// another error for one that is not such a form. The files are read into
+// memory, as they are as large as the request at most.
+func ReadFiles(env func(string) string, in io.Reader, max int, field string, maxFiles int) (url.Values, []File, error) {
+	mediaType, params, _ := mime.ParseMediaType(env("CONTENT_TYPE"))
+	if mediaType != "multipart/form-data" || params["boundary"] == "" {
+		return nil, nil, fmt.Errorf("not a form of files: %q", mediaType)
+	}
+	length, err := strconv.Atoi(env("CONTENT_LENGTH"))
+	if err != nil || length < 0 {
+		return nil, nil, fmt.Errorf("no length")
+	}
+	if length > max {
+		return nil, nil, ErrTooLarge{}
+	}
+	reader := multipart.NewReader(io.LimitReader(in, int64(length)), params["boundary"])
+	values := url.Values{}
+	var files []File
+	for {
+		part, err := reader.NextPart()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return nil, nil, err
+		}
+		data, err := io.ReadAll(part)
+		if err != nil {
+			return nil, nil, err
+		}
+		if part.FormName() == field && part.FileName() != "" {
+			if len(files) == maxFiles {
+				return nil, nil, ErrTooMany{}
+			}
+			files = append(files, File{Name: part.FileName(), Data: data})
+		} else if part.FileName() == "" {
+			values.Add(part.FormName(), string(data))
+		}
+	}
+	return values, files, nil
+}
+
+// ErrTooMany is the error of a form of more files than ReadFiles takes.
+type ErrTooMany struct{}
+
+func (ErrTooMany) Error() string { return "too many files" }
