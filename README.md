@@ -131,12 +131,12 @@ Or `go install github.com/edragoev1/pdfjet-utils/csv2pdf@latest`.
 
 ## img2pdf
 
-**Images to one PDF**, a page each: JPEG, PNG, BMP and SVG, each fitted and
+**Images to one PDF**, a page each: JPEG, PNG and SVG, each fitted and
 centred, on a page turned sideways when it is wide, phone photos the right
 way up (their Exif orientation), SVG as shapes. The PDF is PDF/A-3a and
-PDF/UA-1 in one, made to be kept and tagged for screen readers; a CMYK
-photo, which PDF/A does not take, makes it PDF/UA alone. HEIC, WebP and GIF
-are not supported, said plainly. On the web:
+PDF/UA-1 in one, made to be kept and tagged for screen readers. HEIC, WebP,
+GIF, BMP and CMYK JPEGs (made for printing) are not supported, said
+plainly. On the web:
 [pdfjet.com/images-to-pdf](https://pdfjet.com/images-to-pdf).
 
 ```

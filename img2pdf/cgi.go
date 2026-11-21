@@ -14,6 +14,7 @@
 package main
 
 import (
+	"encoding/binary"
 	"errors"
 	"fmt"
 	"io"
@@ -68,6 +69,11 @@ func handleWeb(env func(string) string, in io.Reader) cgiform.Answer {
 		}
 		pictures = append(pictures, p)
 	}
+	if tooManyPixels(pictures) {
+		return formPage.Error(413, fmt.Sprintf("The PNG images are too large together: Images to PDF takes %d million "+
+			"pixels of PNG at most (a phone's screenshot is about 3 million). Choose fewer, or save them as JPEG.",
+			maxPNGPixels/1_000_000))
+	}
 	opts := options{page: strings.ToLower(form.Get("page")), margin: 36, language: "en-US"}
 	if opts.page == "" {
 		opts.page = "letter"
@@ -109,6 +115,29 @@ func handleWeb(env func(string) string, in io.Reader) cgiform.Answer {
 	case <-time.After(maxTime):
 		return formPage.Error(503, "The PDF took too long to make. Try fewer images.")
 	}
+}
+
+// The most pixels of PNG a form may bring, all its PNGs together: a PNG is
+// unpacked to its pixels and packed again, which takes the time, and the
+// Worker that answers the form on Cloudflare has 15 seconds of it; a JPEG
+// goes into the PDF as it is, and costs next to nothing (21 November 2026)
+const maxPNGPixels = 150_000_000
+
+// tooManyPixels tells whether the PNGs have more pixels together than
+// maxPNGPixels, as their headers say.
+func tooManyPixels(pictures []picture) bool {
+	var total uint64
+	for _, p := range pictures {
+		if p.kind == "png" && len(p.data) >= 24 {
+			w := uint64(binary.BigEndian.Uint32(p.data[16:20]))
+			h := uint64(binary.BigEndian.Uint32(p.data[20:24]))
+			total += w * h
+			if total > maxPNGPixels {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func capitalized(text string) string {

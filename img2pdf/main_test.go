@@ -7,6 +7,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/binary"
 	"fmt"
 	"image"
 	"image/color"
@@ -71,7 +72,6 @@ func TestPictureOf(t *testing.T) {
 	cases := map[string][]byte{
 		"jpeg": jpegOf(t, 4, 4, 0),
 		"png":  pngOf(t, 4, 4),
-		"bmp":  []byte("BM\x00\x00"),
 		"svg":  []byte("<?xml version=\"1.0\"?>\n" + square),
 	}
 	for want, data := range cases {
@@ -146,9 +146,16 @@ func TestJpegIsCMYK(t *testing.T) {
 	if !jpegIsCMYK(cmyk) {
 		t.Error("CMYK not seen")
 	}
-	pdf, err := render([]picture{{name: "c.jpg", data: cmyk, kind: "jpeg"}}, "x", options{page: "a4", margin: 36})
-	if err != nil || bytes.Contains(pdf, []byte("pdfaid:part")) || !bytes.Contains(pdf, []byte("pdfuaid:part>1")) {
-		t.Errorf("a CMYK photo's PDF: %v", err)
+	// Refused, made for printing, which PDF/A does not take
+	if _, err := pictureOf("c.jpg", cmyk); err == nil || !strings.Contains(err.Error(), "c.jpg is a CMYK JPEG") {
+		t.Errorf("a CMYK photo: %v", err)
+	}
+}
+
+func TestBMPRefused(t *testing.T) {
+	if _, err := pictureOf("b.bmp", []byte("BM\x00\x00")); err == nil ||
+		err.Error() != "b.bmp is a BMP image, which is not supported: save it as PNG" {
+		t.Errorf("a BMP: %v", err)
 	}
 }
 
@@ -258,5 +265,30 @@ func TestRunAsCGI(t *testing.T) {
 	handler.ServeHTTP(recorder, request)
 	if recorder.Code != 200 || !bytes.HasPrefix(recorder.Body.Bytes(), []byte("%PDF-")) {
 		t.Fatalf("%d %.300s", recorder.Code, recorder.Body.String())
+	}
+}
+
+func TestTooManyPixels(t *testing.T) {
+	header := func(w, h uint32) []byte {
+		data := []byte("\x89PNG\r\n\x1a\n\x00\x00\x00\x0dIHDR\x00\x00\x00\x00\x00\x00\x00\x00")
+		binary.BigEndian.PutUint32(data[16:20], w)
+		binary.BigEndian.PutUint32(data[20:24], h)
+		return data
+	}
+	fits := []picture{{kind: "png", data: header(10000, 15000)}}
+	if tooManyPixels(fits) {
+		t.Error("150 million pixels refused")
+	}
+	over := append(fits, picture{kind: "png", data: header(1, 1)})
+	if !tooManyPixels(over) {
+		t.Error("150 million and one pixels taken")
+	}
+	// A JPEG costs nothing, and the largest PNG headers do not wrap around
+	huge := []picture{{kind: "jpeg", data: header(1<<31, 1<<31)}}
+	for i := 0; i < 50; i++ {
+		huge = append(huge, picture{kind: "png", data: header(1<<32-1, 1<<32-1)})
+	}
+	if tooManyPixels(huge[:1]) || !tooManyPixels(huge) {
+		t.Error("JPEG counted, or the count wrapped around")
 	}
 }

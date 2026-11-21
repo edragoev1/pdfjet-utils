@@ -4,7 +4,7 @@
 // Licensed under the MIT License. See LICENSE file in the project root.
 
 // img2pdf puts images in one PDF, a page each: photos, scans and drawings,
-// JPEG, PNG, BMP and SVG, each fitted to its page and centred, on a page
+// JPEG, PNG and SVG, each fitted to its page and centred, on a page
 // turned sideways when the image is wider than tall. A photo is drawn the
 // way up its camera says (its Exif orientation), and an SVG as shapes, sharp
 // at any size. The PDF is PDF/A-3a and PDF/UA-1 in one, made to be kept and
@@ -64,7 +64,7 @@ const pageNames = "letter, a4 or legal"
 type picture struct {
 	name string
 	data []byte
-	kind string // jpeg, png, bmp or svg
+	kind string // jpeg, png or svg
 }
 
 func main() {
@@ -148,7 +148,9 @@ func pictureOf(name string, data []byte) (picture, error) {
 	case bytes.HasPrefix(data, []byte("\x89PNG\r\n\x1a\n")):
 		p.kind = "png"
 	case bytes.HasPrefix(data, []byte("BM")):
-		p.kind = "bmp"
+		// No BMP, and no CMYK JPEG, made for printing presses, which PDF/A
+		// does not take: neither is what people bring (21 November 2026)
+		return p, fmt.Errorf("%s is a BMP image, which is not supported: save it as PNG", name)
 	case bytes.Contains(bytes.ToLower(head), []byte("<svg")) ||
 		(bytes.HasPrefix(bytes.TrimSpace(head), []byte("<")) && bytes.Contains(bytes.ToLower(data), []byte("<svg"))):
 		p.kind = "svg"
@@ -162,7 +164,11 @@ func pictureOf(name string, data []byte) (picture, error) {
 	case bytes.HasPrefix(data, []byte("%PDF")):
 		return p, fmt.Errorf("%s is a PDF already, not an image", name)
 	default:
-		return p, fmt.Errorf("%s is not a JPEG, PNG, BMP or SVG image", name)
+		return p, fmt.Errorf("%s is not a JPEG, PNG or SVG image", name)
+	}
+	if p.kind == "jpeg" && jpegIsCMYK(data) {
+		return p, fmt.Errorf("%s is a CMYK JPEG, made for printing, which is not supported: "+
+			"save it as RGB (in Photoshop: Image, Mode, RGB Color)", name)
 	}
 	return p, nil
 }
@@ -187,15 +193,7 @@ func render(pictures []picture, title string, opts options) (pdfBytes []byte, er
 	var buffer bytes.Buffer
 	writer := bufio.NewWriter(&buffer)
 	pdf := pdfjet.NewPDF(writer)
-	// PDF/A keeps its colors in sRGB, which a CMYK photo, as a printer makes
-	// them, is not: a PDF of one is PDF/UA alone, accessible all the same
-	level := compliance.PDF_A_3A_UA_1
-	for _, p := range pictures {
-		if p.kind == "jpeg" && jpegIsCMYK(p.data) {
-			level = compliance.PDF_UA_1
-		}
-	}
-	pdf.SetCompliance(level)
+	pdf.SetCompliance(compliance.PDF_A_3A_UA_1)
 	pdf.SetTitle(title)
 	pdf.SetLanguage(opts.language)
 	data, err := fonts.ReadFile("fonts/IBMPlexSans-Regular.ttf")
